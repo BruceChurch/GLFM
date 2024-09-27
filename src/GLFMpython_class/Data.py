@@ -26,7 +26,7 @@ class Data:
             R = csv.reader(csvfile, delimiter=',')
             for row in R:
                 # TODO: complete
-                print ', '.join(row)
+                print(', '.join(row))
         data = Data(X,C,xlabel,ylabel,cat_labels)
         return data
 
@@ -39,7 +39,7 @@ class Data:
         C = str(data['C'][0])
         # dealing with missing data: replace np.nan by -1
         (xx,yy) = np.where(np.isnan(X)) # find positions where X is nan (i.e. missing data)
-        for r in xrange(len(xx)):
+        for r in range(len(xx)):
             X[xx[r],yy[r]] = -1
 
         data = Data(X,C,xlabel,ylabel,cat_labels)

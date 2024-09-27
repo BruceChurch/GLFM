@@ -1,0 +1,14 @@
+name: GLFMPy3.12
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - cymem
+  - cython
+  - numpy
+  - pandas
+  - python
+  - scipy
+  - matplotlib
+  - gsl
+prefix: /Users/bruce/miniforge3/envs/GLFMPy3.12

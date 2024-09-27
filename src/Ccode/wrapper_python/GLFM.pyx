@@ -87,9 +87,9 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
     N, D = Xin.shape[1], Xin.shape[0]
     K = Zin.shape[0]
     if verbose:
-        print 'N=%d, D=%d, K=%d\n' % (N, D, K)
-        print Xin
-        print Zin
+        print('N=%d, D=%d, K=%d\n' % (N, D, K))
+        print(Xin)
+        print(Zin)
 
     ## transpose input matrices in order to be able to call inner C function
     #cdef np.ndarray[double, ndim=2, mode="c"] Xin = Xin_in.transpose()
@@ -101,13 +101,16 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
     Zview = gsl_matrix_view_array(&Zin[0,0], K,N)
     Zm = &Zview.matrix # we need to allocate input matrix Z to [maxK*N] matrix
     cdef gsl_matrix* Z = gsl_matrix_calloc(maxK,N)
-    for i in xrange(N):
-        for k in xrange(K):
+    for i in range(N):
+        for k in range(K):
              gsl_matrix_set (Z, k, i,gsl_matrix_get (Zm, k, i))
 
     C = ''
-    for d in xrange(D):
+    for d in range(D):
         C += chr( tolower(ord(Cin[d])) ) # convert to lower case
+
+    print("length of C = ")
+    print(len(C))
 
     ##...............BODY CODE.......................##
 
@@ -122,22 +125,25 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
     cdef np.ndarray[double, ndim=1, mode="c"] mu = np.empty(D)
     cdef np.ndarray[double, ndim=1, mode="c"] s2Y = np.empty(D)
     cdef np.ndarray[np.int32_t, ndim=1, mode="c"] R = np.empty(D,dtype=np.int32)
-    print "In C++: transforming input data..."
-    cdef int maxR = initialize_func(N, D, maxK, missing, X, C, B, theta,\
+    print("In C++: transforming input data...")
+    print("Printed C")
+    # print(C)
+
+    cdef int maxR = initialize_func(N, D, maxK, missing, X, C.encode('utf-8'), B, theta,\
             <int*> R.data, &Fin[0], &mu[0], &w[0], &s2Y[0])
-    print "done\n"
+    print("done\n")
     #cdef int maxR = 1
     #cdef np.ndarray[double, ndim=1, mode="c"] Win = np.empty(D)
 
     if verbose:
-        print "maxR = %d" % maxR
+        print("maxR = %d" % maxR)
 
     ##...............Inference Function.......................##
-    print '\nEntering C++: Running Inference Routine...\n'
-    cdef int Kest = IBPsampler_func(missing, X, C, Z, B, theta,\
-            <int*> R.data, &Fin[0], &mu[0], &w[0],\
+    print('\nEntering C++: Running Inference Routine...\n')
+    print('\ntest')
+    cdef int Kest = IBPsampler_func(missing, X, C.encode() , Z, B, theta,<int*> R.data, &Fin[0], &mu[0], &w[0],
             maxR, bias,  N, D, K, alpha, s2B, &s2Y[0], s2u, maxK, Nsim);
-    print '\nBack to Python: OK\n'
+    print('\nBack to Python: OK\n')
 
     #print "w[0]=%.2f, w[1]=%.2f\n" % (float(w[0]), float(w[1]))
 
@@ -150,23 +156,23 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
     #cdef np.ndarray[double, ndim=1] s2Y_out = np.zeros(D)
 
     if verbose:
-        print "Kest=%d, N=%d\n" % (Kest,N)
+        print(f"Kest= {Kest}, N={N}\n")
 
     # #Zview = gsl_matrix_submatrix(Z, 0, 0, Kest, N)
     #print 'N=%d, K=%d, Kest=%d' % (N,K,Kest)
-    for i in xrange(N):
-        for k in xrange(Kest):
+    for i in range(N):
+        for k in range(Kest):
             #print 'k=%d, i=%d' % (k,i)
             Z_out[k,i] = gsl_matrix_get(Z,k,i)
             #Z_out[k,i] = (&Zview.matrix)->data[k*N+i]
     if verbose:
-        print "Z_out loaded"
+        print("Z_out loaded")
 
     cdef gsl_matrix_view Bd_view
     cdef gsl_matrix* BT
     cdef int idx_tmp
-    print "B_out[D,Kest,maxR] where D=%d, Kest=%d, maxR=%d" % (D,Kest,maxR)
-    for d in xrange(D):
+    print("B_out[D,Kest,maxR] where D=%d, Kest=%d, maxR=%d" % (D,Kest,maxR))
+    for d in range(D):
         #print 'd=%d, R[d]=%d' % (d,R[d])
         if (C[d] == 'o'):
             idx_tmp = 1
@@ -175,21 +181,21 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
         Bd_view =  gsl_matrix_submatrix(B[d], 0, 0, Kest, idx_tmp)
         BT = gsl_matrix_alloc(idx_tmp,Kest)
         gsl_matrix_transpose_memcpy (BT, &Bd_view.matrix)
-        for k in xrange(Kest):
+        for k in range(Kest):
             #print 'k=%d' % k
-            for i in xrange(idx_tmp):
+            for i in range(idx_tmp):
                 #print 'i=%d' % i
                 B_out[d,k,i] = gsl_matrix_get(BT,i,k)
         gsl_matrix_free(BT)
     if verbose:
-        print "B_out loaded"
+        print("B_out loaded")
 
-    for d in xrange(D):
-        for i in xrange(maxR):
+    for d in range(D):
+        for i in range(maxR):
             if (C[d]=='o' and i<(R[d]-1)):
                 theta_out[d,i] = gsl_vector_get(theta[d],i)
     if verbose:
-        print "theta_out loaded"
+        print("theta_out loaded")
 
 #    for d in xrange(D):
 #        mu_out[d] = gsl_vector_get(mu,d)
@@ -207,7 +213,7 @@ def infer(np.ndarray[double, ndim=2, mode="c"] Xin not None,\
 #        print "s2Y_out loaded"
 
     ##..... Free memory.....##
-    for d in xrange(D):
+    for d in range(D):
         gsl_matrix_free(B[d])
         if (C[d] == 'o'):
             gsl_vector_free(theta[d])

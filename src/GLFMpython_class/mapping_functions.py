@@ -20,7 +20,7 @@ def exp_count(Zn,Bd, s2y, fpos_1_handler, w, maxX):
  #   w = params{3} # function to compute normalization weights w
  #   maxX = params{4}
     xin = range(1,maxX+1)
-    func = lambda x: pdf_count(x,Zn,Bd,w, s2y,fpos_1_handler)
+    func = lambda x: pdf_count(x, Zn ,Bd ,w, s2y, fpos_1_handler)
     expect = np.inner(xin,func(xin))
     return expect
 
@@ -40,7 +40,7 @@ def rnd_pos(Zn,Bd,numSamples,s2y,s2u,fpos_1_handler,dfpos_1_handler,w,maxX):
     domain = [a,b+5]
 
     # FIND ARS IN PYTHON
-    samples = ars(func, a, b, domain, numSamples, [])
+    samples = np.ars(func, a, b, domain, numSamples, [])
     samples = np.exp(samples)
     return samples
 
@@ -58,11 +58,11 @@ def freal(y, s2u):
     # s2u: auxiliary noise
     dim = len(y.shape)
     if dim == 1:
-        tmp = randn(y.shape[0])
+        tmp = np.random.randn(y.shape[0])
     elif dim == 2:
-        tmp = randn(y.shape[0],y.shape[1])
+        tmp = np.random.randn(y.shape[0],y.shape[1])
     else:
-        print 'undefined dimensions for y'
+        print( 'undefined dimensions for y')
     x = y + np.sqrt(s2u) * tmp
     return x
 
@@ -94,12 +94,12 @@ def ford(y, theta):
     # Inputs:
     #       y: [1*R] Pseudo-observations
     #   theta: [1*(R-1)] Thresholds that divide the real line into R regions
-    for r in xrange(len(theta)): #= 1:length(theta)
+    for r in range(len(theta)): #= 1:length(theta)
         val = theta[r]
         if (y < val):
             x = r
             break
-        if r == size(theta,3):
+        if r == np.size(theta,3):
             x = r+1
     return x
 
@@ -168,12 +168,12 @@ def pdf_cat(Zn,Bd,s2u,R):
 
     pdf = np.zeros(R)
     numMC_samples = 100
-    for r in xrange(R):
+    for r in range(R):
         tmp = np.ones((1,numMC_samples))
         # we compute the expectation using Monte Carlo samples
         # TODO: check that u does not depend on j
         uV = np.sqrt(s2u) * np.random.randn(numMC_samples) # mean = 0
-        for j in xrange(R):
+        for j in range(R):
             if (j==r):
                 continue
             tmp = tmp * norm.cdf(uV + np.kron( np.ones(numMC_samples), \
@@ -198,7 +198,7 @@ def pdf_ord(Zn,Bd,theta,s2y):
     #   s2y: scalar, variance of pseudo-observations
     R = len(theta)+1 # number of categories
     pdf = np.zeros(R)
-    for r in xrange(R):
+    for r in range(R):
         if (r==0):
             a = norm.cdf(theta[0],np.inner(Zn,Bd),np.sqrt(s2y))
             b = 0

@@ -36,7 +36,7 @@ class GLFM:
         self.verbose = verbose
 
     def print_info(self):
-        print 'General Latent Feature Model Object:\n'+\
+        print( 'General Latent Feature Model Object:\n'+\
                 ('alpha: %.2f\n' % self.alpha)+\
                 (' bias: %d\n' % self.bias)+\
                 ('  s2y: %.2f\n' % self.s2y)+\
@@ -45,7 +45,7 @@ class GLFM:
                 ('Niter: %d\n' % self.Niter)+\
                 (' maxK: %d\n' % self.maxK)+\
                 ('missing: %d\n' % self.missing)+\
-                ('verbose: %d\n' % self.verbose)
+                ('verbose: %d\n' % self.verbose))
 
 
     def infer(self, Xin, Cin, Zin):
@@ -90,7 +90,7 @@ class GLFM:
         f_1= lambda x,w: np.log(np.exp(w*x)-1) # called element-wise 
         f= lambda y,w:  np.log(np.exp(y)+1)/w
         W = 2 / Xmiss.max(1) # D*1 # TODO: Take care of missing values when taking max
-        for ii in xrange(len(idxs_n)):
+        for ii in range(len(idxs_n)):
             if Xmiss[idxs_d[ii],idxs_n[ii]] == missing: # will always be the case
                 d = idxs_d[ii] # np.ceil(ii/N)
                 n = idxs_n[ii] # np.mod(ii,N)
@@ -107,7 +107,7 @@ class GLFM:
                    Br = np.squeeze(B[d,:,:])
                    prob = np.zeros((1,R[d]))
                    Y = np.zeros((1,R[d]))
-                   for r in xrange(R[d]):
+                   for r in range(R[d]):
                        Y[r]= np.inner(aux.transpose(),Br[:,r]) # TODO: check
                    Xcompl[d,n] = np.where(Y == np.max(Y))[0]
                 elif (C[d] == 'o' ):

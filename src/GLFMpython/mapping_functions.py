@@ -15,7 +15,7 @@ def f_g(y, mu, w):
     # Mapping function for real-valued data
     #  Y -> X (from pseudo-obversations to data)
     assert not(w == 0), 'scaling factor should never be 0'
-    x = (y*1.0)/w + mu;
+    x = (y*1.0)/w + mu
     return x
 
 def f_p(y, mu, w):
@@ -31,7 +31,7 @@ def f_c(y):
     # output: x [N*1]
     assert (len(y.shape) > 1), 'there is only one category, this dimension does not make sense'
     x = np.zeros(y.shape[0])
-    for i in xrange(y.shape[0]):
+    for i in range(y.shape[0]):
         val = max(y[i,:])
         x[i] = np.where(y[i,:] == val)[0][0] + 1
     # [a,x] = max(y,[],2);
@@ -52,7 +52,7 @@ def f_o(y, theta):
     #       y: [1*R] Pseudo-observations
     #   theta: [1*(R-1)] Thresholds that divide the real line into R regions
     x = np.zeros(y.shape[0]) # column vector
-    for j in xrange(len(theta)):
+    for j in range(len(theta)):
         if (j == 0):
             mask = (y <= theta[0])
         else:
@@ -143,10 +143,10 @@ def pdf_c(Zn,B,s2y,numMC_samples=100):
     R = B.shape[0]
     pdf = np.zeros(R)
     uV = np.sqrt(s2y) * np.random.randn(numMC_samples) # mean for u = 0
-    for r in xrange(R):
+    for r in range(R):
         tmp = np.ones((1,numMC_samples))
         # we compute the expectation using Monte Carlo samples
-        for j in xrange(R):
+        for j in range(R):
             if (j==r):
                 continue
             tmp = tmp * norm.cdf(uV + np.kron( np.ones(numMC_samples), \
@@ -192,7 +192,7 @@ def pdf_o(Zn,Bd,theta,s2y):
 
     R = len(theta)+1 # number of categories
     pdf = np.zeros(R)
-    for r in xrange(R):
+    for r in range(R):
         pdf[r] = pdf_o_single(r,Zn,Bd,theta,s2y)
     return pdf
 

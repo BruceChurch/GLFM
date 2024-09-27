@@ -4,8 +4,6 @@ import random
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-import pdb
-from IPython import embed
 
 import time
 import os
@@ -58,15 +56,15 @@ def infer(data,hidden=dict(), params=dict()):
     assert(type(data) is dict), "input 'data' should be a dictionary."
     assert(type(hidden) is dict), "input 'hidden' should be a dictionary."
     assert(type(params) is dict), "input 'params' should be a dictionary."
-    assert(data.has_key('X')), "dictionary data does not have any matrix X defined."
-    assert(data.has_key('C')), "dictionary data does not have any datatype array C defined."
+    assert('X' in data ), "dictionary data does not have any matrix X defined."
+    assert('C' in data ), "dictionary data does not have any datatype array C defined."
     assert(params['bias'] <= 1), "bias parameter misspecified: should be either 0 or 1."
 
     N = data['X'].shape[0] # number of observations
     D = data['X'].shape[1] # number of dimensions
 
     # if Z does not exist, initialize
-    if not(hidden.has_key('Z')):
+    if not('Z' in hidden ):
         hidden['Z'] = 1.0*(np.random.rand(N,2) > 0.8)
         if params['bias'] == 1: # add bias if requested
             hidden['Z'] = np.concatenate((np.ones((N,1)), hidden['Z']),axis=1)
@@ -78,18 +76,21 @@ def infer(data,hidden=dict(), params=dict()):
 
     # change labels for categorical and ordinal vars such that categories
     # start counting at 1 and all of them are bigger than 0
-    for d in xrange(D):
+    for d in range(D):
         if (tmp_data['C'][d]=='c' or tmp_data['C'][d]=='o'):
             mask = tmp_data['X'][:,d] != params['missing']
             uniqueVal = np.unique(tmp_data['X'][mask,d])
             Xaux = np.zeros(N)
-            for i in xrange(len(uniqueVal)):
+            for i in range(len(uniqueVal)):
                 Xaux[tmp_data['X'][:,d] == uniqueVal[i]] = i+1
-            Xaux[map(lambda x: not x, mask)] = params['missing']
+            print(mask)
+            nmask = list(map(lambda x: not x, mask))
+            print(nmask)
+            Xaux[nmask] = params['missing']
             tmp_data['X'][:,d] = Xaux
 
     # eventually, apply external transform specified by the user
-    for r in xrange(tmp_data['X'].shape[1]):
+    for r in range(tmp_data['X'].shape[1]):
         if not(params['t'][r] == None): # there is an external transform
             tmp_data['X'][:,r] = params['t_1'][r](tmp_data['X'][:,r])
             tmp_data['C'] = tmp_data['C'][:r] + params['ext_dataType'][r] + tmp_data['C'][(r+1):]
@@ -110,7 +111,7 @@ def infer(data,hidden=dict(), params=dict()):
 
     hidden['time'] = tlast - tinit
     if params['verbose']:
-        print '\n\tElapsed time: %.2f seconds.\n' % hidden['time']
+        print('\n\tElapsed time: %.2f seconds.\n' % hidden['time'])
 
     # wrap output values inside hidden
     hidden['Z'] = Z_out.transpose()
@@ -121,7 +122,7 @@ def infer(data,hidden=dict(), params=dict()):
     hidden['s2Y'] = s2Y_out
 
     hidden['R'] = [None] * D
-    for d in xrange(D):
+    for d in range(D):
         if (data['C'][d] == 'c' or data['C'][d] == 'o'):
             hidden['R'][d] = np.unique( data['X']\
                     [(data['X'][:,d] != params['missing']) & (~np.isnan(data['X'][:,d])),d] )
@@ -167,12 +168,12 @@ def complete(data, hidden=dict(), params=dict()):
     assert(type(data) is dict), "input 'data' should be a dictionary."
     assert(type(hidden) is dict), "input 'hidden' should be a dictionary."
     assert(type(params) is dict), "input 'params' should be a dictionary."
-    assert(data.has_key('X')), "dictionary data does not have any matrix X defined."
-    assert(data.has_key('C')), "dictionary data does not have any datatype array C defined."
+    assert('X' in data ), "dictionary data does not have any matrix X defined."
+    assert('C' in data ), "dictionary data does not have any datatype array C defined."
     assert(params['bias'] <= 1), "bias parameter misspecified: should be either 0 or 1."
 
     if sum( sum( (np.isnan(data['X'])) | (data['X']==params['missing']) )) == 0:
-        print "The input matrix X has no missing values to complete."
+        print("The input matrix X has no missing values to complete.")
         Xcompl = []
         return (Xcompl,hidden)
 
@@ -186,7 +187,7 @@ def complete(data, hidden=dict(), params=dict()):
     [xx_miss, yy_miss] = (tmp_data['X'] == params['missing']).nonzero()
 
     Xcompl=np.copy(tmp_data['X'])
-    for ii in xrange(len(xx_miss)): # for each missing
+    for ii in range(len(xx_miss)): # for each missing
         if tmp_data['X'][xx_miss[ii],yy_miss[ii]] == params['missing']: # will always be the case
             Xcompl[xx_miss[ii],yy_miss[ii]] = computeMAP( tmp_data['C'], hidden['Z'][xx_miss[ii],:], hidden, params, [ yy_miss[ii] ] )
     return (Xcompl,hidden)
@@ -226,9 +227,9 @@ def computeMAP(C, Zp, hidden, params=dict(), idxsD=[]):
     assert (K2 == K), "Incongruent sizes between Zp and hidden['B']: number of latent variables should not be different"
 
     X_map = np.zeros((P,len(idxsD))) # output matrix
-    for dd in xrange(len(idxsD)): # for each dimension
+    for dd in range(len(idxsD)): # for each dimension
         d = idxsD[dd]
-        if params.has_key('t'): # if external transformations have been defined
+        if 't' in params: # if external transformations have been defined
             if not(params['t'][d] == None): # there is an external transform for data type d
                 C = C[:d] + params['ext_dataType'][d] + C[(d+1):]
 
@@ -250,7 +251,7 @@ def computeMAP(C, Zp, hidden, params=dict(), idxsD=[]):
             raise ValueError('Unknown data type')
         if (sum(np.isnan(X_map[:,dd])) > 0):
             raise ValueError('Some values are nan!')
-        if params.has_key('t'):
+        if 't' in params:
             if not(params['t'][d] == None): # there is an external transform for data type d
                 X_map[:,dd] = params['t'][d]( X_map[:,dd] )
     return X_map
@@ -259,7 +260,7 @@ def computePDF(data, Zp, hidden, params, d):
     """
     Function to compute probability density function for dimension d
     """
-    print "dim=%d\n" % d
+    print("dim=%d\n" % d)
     tmp_data = copy.deepcopy(data) #np.copy(data).tolist()
     tmp_data['X'][np.isnan(tmp_data['X'][:,d]),d] = params['missing']
 
@@ -292,7 +293,7 @@ def computePDF(data, Zp, hidden, params, d):
         numS = len(xd) # number of labels for categories or ordinal data
     pdf = np.zeros((P,numS))
 
-    for p in xrange(P):
+    for p in range(P):
         if tmp_data['C'][d] == 'g':
             pdf[p,:] = mf.pdf_g(xd,Zp[p,:], hidden['B'][d,:,0],\
                     hidden['mu'][d], hidden['w'][d], hidden['s2Y'][d], params['s2u'])
@@ -313,7 +314,7 @@ def computePDF(data, Zp, hidden, params, d):
             raise ValueError('Unknown data type')
         assert (np.sum(np.isnan(pdf)) == 0), "Some values are nan!"
 
-    if params.has_key('t'):
+    if 't' in params:
         if (params['t'][d] != None): # we have used a special transform beforehand
             xd = params['t'][d](xd) # if there was an external transformation, transform pdf
             pdf = pdf * np.abs( params['dt_1'][d](xd) )
@@ -347,7 +348,7 @@ def compute_log_likelihood(
 
     # Apply external transformation if any
     Xtrue_transformed_ND = Xtrue_ND.copy()
-    for d in xrange(D):
+    for d in range(D):
         if (params['t'][d] != None): # if there is an external transformation
             # change type of dimension d by external data type
             C = C[:d]+params['ext_dataType'][d]+C[d+1:]
@@ -359,7 +360,7 @@ def compute_log_likelihood(
     lik_cords = [tuple(l) for l in lik_cords]
 
     unique_maps = [None] * D
-    for d in xrange(D):
+    for d in range(D):
         # Ensure that tnd is mapped to the correct low label
         if (C[d] == 'c') | (C[d] == 'o'):
             unique_vals = np.unique(Xtrue_ND[:, d])
@@ -430,7 +431,7 @@ def compute_log_likelihood(
     assert (np.isnan(lik).sum() == 0), "Some values are nan!"
 
     # transform lik pdf_y (pseudo-obs) into lik pdf_x
-    for d in xrange(D):
+    for d in range(D):
         if params.has_key('t'):
             if (params['t'][d] != None): # we have used a special transform beforehand
                 mask = (~np.isnan(Xtrue_ND[:,d]))
@@ -438,7 +439,8 @@ def compute_log_likelihood(
                     params['dt_1'][d](Xtrue_ND[mask,d]) )
 
     # finally, apply log transform
-    for d in xrange(D):
+    for d in range(D):
+        mask = (~np.isnan(Xtrue_ND[:, d]))
         lik[mask,d] = np.log(lik[mask,d])
     return lik
 
@@ -458,7 +460,7 @@ def get_feature_patterns_sorted(Z):
     patterns = np.vstack({tuple(row) for row in Z})
     numP = patterns.shape[0]
     L = np.zeros(numP)
-    for r in xrange(numP): # for each pattern
+    for r in range(numP): # for each pattern
         pat = patterns[r,:]
         mask = np.sum(np.tile(pat,(N,1)) == Z, axis=1) == Z.shape[1]
         C[mask] = r
@@ -471,9 +473,9 @@ def get_feature_patterns_sorted(Z):
     L = L[idxs]
     patterns = patterns[idxs,:]
 
-    print '\n'
-    for r in xrange(numP): # for each pattern
-        print '%d. %s: %d' % (r, str(patterns[r,:]), L[r])
+    print ('\n')
+    for r in range(numP): # for each pattern
+        print('%d. %s: %d' % (r, str(patterns[r,:]), L[r]))
 
     return (patterns,C,L)
 
@@ -520,7 +522,7 @@ def plotPatterns(data, hidden, params, patterns, colors=[], styles=[],\
     # legend for empirical histogram
     leg = ['Empirical'] + leg
 
-    for dd in xrange(len(idxD)): # for each required dimension
+    for dd in range(len(idxD)): # for each required dimension
         d = idxD[dd]
         plt.figure(d)                 # create new figure
         #hold off # TODO
@@ -559,7 +561,7 @@ def plotPatterns(data, hidden, params, patterns, colors=[], styles=[],\
                    density=True)
             bar_width = 0.8/(numPatterns+1)
             plt.bar(xd,tmp,width=bar_width, color=colors[0], label=leg[0]) # plot empirical
-            for p in xrange(numPatterns):
+            for p in range(numPatterns):
                 plt.bar(xd+(p+1)*bar_width,pdf[p,:],width=bar_width,\
                         color=colors[np.mod(p+1,len(colors))], label=leg[p+1])
             plt.xticks(xd + 0.4, data['cat_labels'][d]) #, rotation='vertical')
@@ -569,7 +571,7 @@ def plotPatterns(data, hidden, params, patterns, colors=[], styles=[],\
             #h(1).FaceColor = [0.8784 0.8784 0.8784];
 
         elif (tmp_data['C'][d] == 'n'):
-            for p in xrange(numPatterns):
+            for p in range(numPatterns):
                 markerline, stemlines, baseline = plt.stem(xd,pdf[p,:], label=leg[p+1])
                 plt.setp(stemlines, 'color', colors[np.mod(p+1,len(colors))]) # plt.getp(markerline,'color'))
                 plt.setp(markerline, 'markerfacecolor', colors[np.mod(p+1,len(colors))]) # plt.getp(markerline,'color'))
@@ -579,7 +581,7 @@ def plotPatterns(data, hidden, params, patterns, colors=[], styles=[],\
             #for p in xrange(numPatterns):
             #    for r in xrange(len(xd)):
             #        inte[p] = inte[p] + (xd[p+1] - xd[p])*pdf[p,r]
-            for p in xrange(numPatterns):
+            for p in range(numPatterns):
             #    print "int = %f\n" % sum((xd[1]-xd[0])*pdf[p,:])
                 plt.plot(xd,pdf[p,:], color=colors[np.mod(p+1,len(colors))], label=leg[p+1])
 
@@ -607,28 +609,28 @@ def init_default_params(data, params):
     """
     # s2u=0.001
     D = data['X'].shape[1]
-    if not(params.has_key('missing')):
+    if not('missing' in params ):
         params['missing'] = -1
-    if not(params.has_key('alpha')):
+    if not('alpha' in params):
         params['alpha'] = 1
-    if not(params.has_key('bias')):
+    if not('bias' in params ):
         params['bias'] = 0
-    if not(params.has_key('s2u')):
+    if not( 's2u' in params ):
         params['s2u'] = 0.01
-    if not(params.has_key('s2B')):
+    if not( 's2B' in params ):
         params['s2B'] = 1
-    if not(params.has_key('Niter')):
+    if not('Niter' in params ):
         params['Niter'] = 1000
-    if not(params.has_key('maxK')):
+    if not('maxK' in params ):
         params['maxK'] = D
-    if not(params.has_key('verbose')):
+    if not( 'verbose' in params ):
         params['verbose'] = 1
 
     # parameters for optional external transformation
-    if not(params.has_key('t')):
+    if not('t' in params ):
         params['t'] = [None] * D
-    if not(params.has_key('t_1')):
+    if not('t_1' in params ):
         params['t_1'] = [None] * D
-    if not(params.has_key('dt_1')):
+    if not('dt_1' in params ):
         params['dt_1'] = [None] * D
     return params
